@@ -1,0 +1,60 @@
+# any non required files generated just as by
+# product for the shell script
+.env
+**/**/.env
+**/*/.env
+**/.env
+*/**/.env
+*/*/.env
+*/.env
+.env*
+**/**/.env*
+**/*/.env*
+**/.env*
+*/**/.env*
+*/*/.env*
+*/.env*
+
+
+.DS_Store
+
+# SSH KEYS
+travis_deploy_rsa
+travis_deploy_rsa.pub
+jenkins_deploy_rsa
+jenkins_deploy_rsa.pub
+
+# ####### Project Related ##########
+config/database.yml
+config/activity_config.yml
+*.db
+mysql_seed/test_data
+activity.log
+*.log
+logs
+
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
+.glide/
+
+
+# vendor package related (simialr to node_modules)
+vendor/
+
+
+*.log
+*.tmp
+
+Godeps/_workspace
+vendor
