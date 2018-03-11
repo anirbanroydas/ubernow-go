@@ -1,16 +1,15 @@
-# uberNow-go
+# ubernow-go
+
+Golang Implementation of uberNow https://www.github.com/anirbanroydas/uberNow 
+This time implementing in Clean Architecture proposed by Robert Martin a.k.a Uncle Bob.
+
 
 It is an app to notify users via email as to when to book an uber as per given time to reach a specified destination from a specified source. It is a rewrite in Go of the original uberNow written in python.
 
 
-## Documentation
-
-**Link :** http://ubernow.readthedocs.io/en/latest/
-
-
 ## Project Home Page
 
-**Link :** https://www.github.com/anirbanroydas/uberNow-go
+**Link :** https://www.github.com/anirbanroydas/ubernow-go
 
 
 
