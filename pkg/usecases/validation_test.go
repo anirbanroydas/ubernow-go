@@ -2,13 +2,25 @@ package usecases
 
 import (
 	// "fmt"
-	"reflect"
+	// "reflect"
 	"testing"
 
 	"github.com/pkg/errors"
 
 	"github.com/anirbanroydas/ubernow-go/pkg/domain"
 )
+
+type MockAddressValidator struct{}
+
+func (d MockAddressValidator) Validate(ua domain.UserAddress) error {
+	return nil
+}
+
+type MockBadAddressValidator struct{}
+
+func (d MockBadAddressValidator) Validate(ua domain.UserAddress) error {
+	return errors.New("some error")
+}
 
 func TestValidEmailValue(t *testing.T) {
 	testCases := []struct {
@@ -91,11 +103,11 @@ func TestNewUserAddressValidator(t *testing.T) {
 	for i, _ := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
-
 			result, err := NewUserAddressValidator(tc.addressType)
-			t.Logf("err: %+v\n", err)
-			t.Logf("tc.expectedError: %+v\n", tc.expectedError)
-			if result != tc.expectedResult || !reflect.DeepEqual(err, tc.expectedError) {
+			if result != tc.expectedResult ||
+				(err != nil && tc.expectedError == nil) ||
+				(err == nil && tc.expectedError != nil) {
+
 				t.Errorf("%s: NewUserAddressValidator(%s) => Got: (%v, %v), expected: (%v, %v)", tc.name, tc.addressType, result, err, tc.expectedResult, tc.expectedError)
 			}
 		})

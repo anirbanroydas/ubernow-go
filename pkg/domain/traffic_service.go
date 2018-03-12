@@ -24,7 +24,7 @@ type TrafficRequest struct {
 // ecnapsulates a pointer to the TrafficRequest.
 type TrafficResponse struct {
 	*TrafficRequest
-	TravelTime time.Time
+	TravelTime time.Duration
 	BestCase   time.Time
 	WorstCase  time.Time
 }

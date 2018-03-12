@@ -11,7 +11,7 @@ import (
 
 type TrafficResponseDTO struct {
 	*domain.UserRequest
-	TravelTime []time.Time
+	TravelTime []time.Duration
 	BestCase   []time.Time
 	WorstCase  []time.Time
 }
@@ -20,7 +20,7 @@ type TrafficInteractor struct {
 	TrafficService domain.TrafficService
 }
 
-func (tr *TrafficInteractor) GetTrafficFinalResponse(baseTravelTime time.Time, ur *domain.UserRequest) (*TrafficResponseDTO, error) {
+func (tr *TrafficInteractor) GetTrafficFinalResponse(baseTravelTime time.Duration, ur *domain.UserRequest) (*TrafficResponseDTO, error) {
 	var tResp *TrafficResponseDTO
 	// TODO: implement the algorithm and find the final set of
 	// best and worst case times to start the journey to reach
@@ -41,8 +41,8 @@ func (tr *TrafficInteractor) GetTrafficFinalResponse(baseTravelTime time.Time, u
 
 }
 
-func (tr *TrafficInteractor) GetBaseTravelTime(source, destination domain.Location, t time.Time) (time.Time, error) {
-	var baseTravelTime time.Time
+func (tr *TrafficInteractor) GetBaseTravelTime(source, destination domain.Location, t time.Time) (time.Duration, error) {
+	var baseTravelTime time.Duration
 	// step 0: create new traffic request
 	treq := domain.NewTrafficRequest(source, destination, t)
 	// step 1: poll traffic service

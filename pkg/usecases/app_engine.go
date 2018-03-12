@@ -30,7 +30,7 @@ type UserRequestJob struct {
 
 func (job *UserRequestJob) DoWork() error {
 	var err error
-	var baseTravelTime time.Time
+	var baseTravelTime time.Duration
 	baseTravelTime, err = job.TrafficInteractor.GetBaseTravelTime(job.UserRequest.Source, job.UserRequest.Destination, time.Now())
 	if err != nil {
 		return errors.Wrap(err, "UserRequestJob's DoWork returned error while calling TrafficInteractor.GetBaseTravelTime method")
