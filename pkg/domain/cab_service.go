@@ -5,6 +5,8 @@ import (
 )
 
 var (
+	// ALLOWED_CABS has information about different cabs and their associated cab types that
+	// application right now caters to.
 	ALLOWED_CABS = []struct {
 		Name  string
 		Types []string
@@ -21,22 +23,26 @@ var (
 	}
 )
 
-// cabService is a serive which exposes the interface having the method etaNow which takes a cabRequest
-// as input and return a time.Time which tells what is the eta for the request. Any cab service be it
-// ola, uber, can implement it.
+// CabService is a serive which is an interface which exposes the method EtaNow which takes a pointer
+// to a CbRequest as input and return a time.Duration and error as output.
+// This tells you what is the eta for the request to that particular cab service.
+// Any cab service (be it ola, uber, lyft) can implement the EtaNow method.
 type CabService interface {
 	EtaNow(*CabRequest) (time.Duration, error)
 }
 
-// booking is response sent by the business to the user at the user's notificatio address,
-// booking encapsulated information like the userRequest, booking time and eta of the cab.
+// CabBookingResponse is the final response the is generated of the application which is
+// sent to the user as notification at the user's notificatio address,
+// CabBookingResponse encapsulated information like the UserRequest and the best booking time
+// to request/book a cab.
 type CabBookingResponse struct {
 	BookingID uint64
 	*UserRequest
 	BestBookingTime time.Time
 }
 
-// cabRequest is a composition of request type which is sent to the cab service.
+// CabRequest is a composition of the attricutes which make a valid request
+// which can be sent to the CabService.
 type CabRequest struct {
 	Source      Location
 	Destination Location
@@ -45,11 +51,15 @@ type CabRequest struct {
 	CabType     string
 }
 
+// CabBookingResponseRepository exposes the interface to store and find the cab booking responses
+// from a repository.
 type CabBookingResponseRepository interface {
 	FindById(uint64) *CabBookingResponse
 	Store(*CabBookingResponse) (uint64, error)
 }
 
+// validateCab if a function which takes cab and cabType, both of type string as inputs and returns
+// if the cab, cabType combination is valid and allowed by the applicaion or not. It returns a bool.
 func validateCab(cab, cabType string) bool {
 	for _, c := range ALLOWED_CABS {
 		if cab == c.Name {
@@ -64,6 +74,8 @@ func validateCab(cab, cabType string) bool {
 	return false
 }
 
+// NewCabRequest is a constructor that takes in many attributes which form the CabRequest object and
+// constructs a new CabRequst object with those inputs and send a pointer to that objec in return.
 func NewCabRequest(source, destination Location, bookingTime time.Time, cab, cabType string) *CabRequest {
 	cr := CabRequest{
 		Source:      source,
@@ -76,6 +88,9 @@ func NewCabRequest(source, destination Location, bookingTime time.Time, cab, cab
 	return &cr
 }
 
+// NewCabBookingResponse is a constructor function which takes pointers to UserRequest object and the
+// bestBookingTime of type time.Time as inputs and returns a pointer to the newly created
+// CabBookingResponse object.
 func NewCabBookingResponse(ur *UserRequest, bestBookingTime time.Time) *CabBookingResponse {
 	cr := CabBookingResponse{
 		UserRequest:     ur,

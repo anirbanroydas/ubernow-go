@@ -1,10 +1,13 @@
-// package domain consists of all the domain object the business
+// package domain consists of all the core domain objects of the business/application.
+//
 // ubernow-go can be considered in general as a service which takes requests
 // from users and notifiies them when is the right time to book a cab,
 // now, this cab can be uber, ola, etc, for simnplicity we are talking about uber,
 // but the business considers it just a cab.
 //
-// So using DDD principles I have found the domain objects
+// So using DDD principles I have found the domain objects that is part of the main
+// business logic.
+//
 // Lets talk a little about the domain experts, this may not be exactly a direct
 // application of DDD but a flavour which is easier to implement ond practical to
 // proceed with, at a faster pace (to keep the agile going)
@@ -49,18 +52,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	reaching_time_threshold_in_minute int
-	default_time_threshold_in_minute  = 5
+const (
+	default_time_threshold_in_minute int = 5
 )
 
-// user is an  entity which encapsulate information aobut a user.
+var (
+	reaching_time_threshold_in_minute int
+)
+
+// User is an  entity which encapsulate information aobut a user.
 type User struct {
 	UserID uint64
 	Name   string
 }
 
-// location encapsulates any kind of location like source, destination used
+// Location encapsulates any kind of location like source, destination used
 // by other domain objects.
 type Location struct {
 	Name      string
@@ -68,16 +74,16 @@ type Location struct {
 	Longitude string
 }
 
-// userAddress encapsulated the different addresses that belong to the user, like
-// where the user wants to get notified at, so the addrType can be lets say "email"
-// and the value can be "anirban.nick@gmail.com", or it can be addrType: "sms"
-// and value: "xxxxxxxxxx".
+// UserAddress encapsulates the different addresses that belong to the user, like
+// where the user wants to get notified at, so the AddrType can be lets say "email"
+// and the value can be "anirban.nick@gmail.com", or it can be AddrType: "sms"
+// and value: "xxxxxxxxxx" (phone number).
 type UserAddress struct {
 	AddrType string
 	Value    string
 }
 
-// request is the root of the aggregrae which encapsulate information like source,
+// Request is the root of the aggregrae which encapsulate information like source,
 // destination, reaching time of the user, cab and cab type preferred, notification address
 // of user where the user needs the notification regrading when to book the cab is to be sent.
 type Request struct {
@@ -90,7 +96,7 @@ type Request struct {
 	NotificationAddr UserAddress
 }
 
-// userRequest encapsulates a request with a user
+// UserRequest associates a request with a particular user
 type UserRequest struct {
 	*User
 	*Request
@@ -108,27 +114,37 @@ type RequestRepository interface {
 	Store(*Request) (uint64, error)
 }
 
+// UserAddressValidator is an interface having the method Validate which takes in
+// a UserAddress and returns an error type.
+// The reason to use an interface here unlike the other validation functions,
+// ones which uses a plain function because the requirement to validate those are not
+// going to change, and there can only be one way to validate them, so if we want to
+// change anything(logic) we can just go to those respective functions and change the
+// validation logic which is completely hidden from the responsibility of NewRequest function
+// which eventually calls these validation functions.
+//
+// But, in case of address validation, there can be multiple address types, so if we hard code
+// a particular validation logic associated with a particular address type, and in future if we
+// need another type of address type, then we have to rewrite a different NewRequest to faciliate
+// that change. Thhus it is against the OPen/Closed principle of SOLID design.
+// Making the validator as an interface, we can throw in any kind of validator (email, sms, web etc)
+// which can have their separate Validate logic and still we can continue to use this NewRequest method
 type UserAddressValidator interface {
 	Validate(UserAddress) error
 }
 
+// Logger is an interface which exposes two methods LogError and LogInfo both of which takes
+// a string input and logs the to anykind of writer.
 type Logger interface {
 	LogError(string)
 	LogInfo(string)
 }
 
-// type LocationValidator interface {
-// 	Validate(location) bool
-// }
-
-// type TimeValidator interface {
-// 	Validate(time.Time) error
-// }
-
-// type CabValidator interface {
-// 	Validate(cab, cabType string) bool
-// }
-
+// init will initialize the reaching_time_threshold_in_minute by reading from
+// environment variable. If environment variable is not set, just use the default
+// reaching time.
+// Both reaching_time_threshold_in_minute and default_time_threshold_in_minute
+// are set as global variables at the top
 func init() {
 	reaching_time_threshold_string, ok := os.LookupEnv("REACHING_TIME_THRESHOLD")
 	if !ok {
@@ -142,34 +158,9 @@ func init() {
 	}
 }
 
-func ToString(t time.Time) string {
-	h, m, s := "", "", ""
-	if t.Hour() != 0 {
-		h = strconv.Itoa(t.Hour()) + "h"
-	}
-	if t.Minute() != 0 {
-		m = strconv.Itoa(t.Minute()) + "m"
-	}
-	if t.Second() != 0 {
-		s = strconv.Itoa(t.Second()) + "s"
-	}
-	return h + m + s
-}
-
-func validateLocation(l Location) bool {
-	if l.Latitude == "" || l.Longitude == "" {
-		return false
-	}
-	return true
-}
-
-func validateReachingTime(rt time.Time) error {
-	if rt.Sub(time.Now()) < time.Duration(time.Duration(reaching_time_threshold_in_minute)*time.Minute) {
-		return errors.New(fmt.Sprintf("reaching time: %s has past or is less than threshold interval: %d minutes from current time", rt, reaching_time_threshold_in_minute))
-	}
-	return nil
-}
-
+// NewRequest takes different arguments as input and validates each argument
+// and then if all arguments are validated, it creates a new Request object and
+// returns a pointer to the Object.
 func NewRequest(source, destination Location, reachingTime time.Time, cab, cabType string, notificationAddr UserAddress, uav UserAddressValidator) (*Request, error) {
 	var r *Request
 	ok := validateLocation(source)
@@ -188,6 +179,7 @@ func NewRequest(source, destination Location, reachingTime time.Time, cab, cabTy
 	if !ok {
 		return r, errors.New(fmt.Sprintf("requested cab: %s or cabtype: %s not avaialable", cab, cabType))
 	}
+
 	err = uav.Validate(notificationAddr)
 	if err != nil {
 		return r, errors.Wrap(err, "NewRequest couldn't validate notification address")
@@ -205,6 +197,8 @@ func NewRequest(source, destination Location, reachingTime time.Time, cab, cabTy
 	return r, nil
 }
 
+// NewUser is another constructor which take name of type string as input and returns a pointer to
+// a newly created a User object.
 func NewUser(name string) *User {
 	u := User{
 		Name: name,
@@ -212,6 +206,8 @@ func NewUser(name string) *User {
 	return &u
 }
 
+// NewUserRequest is a constructor function which takes pointers to User and Request objects, constructs
+// a new UserRequest object and returns the pointer to that object.
 func NewUserRequest(u *User, r *Request) *UserRequest {
 	ur := UserRequest{
 		User:    u,
@@ -219,4 +215,36 @@ func NewUserRequest(u *User, r *Request) *UserRequest {
 	}
 
 	return &ur
+}
+
+// ToString takes a time.Time input and returns a human string which cmobines its hour, min, second values.
+func ToString(t time.Time) string {
+	h, m, s := "", "", ""
+	if t.Hour() != 0 {
+		h = strconv.Itoa(t.Hour()) + "h"
+	}
+	if t.Minute() != 0 {
+		m = strconv.Itoa(t.Minute()) + "m"
+	}
+	if t.Second() != 0 {
+		s = strconv.Itoa(t.Second()) + "s"
+	}
+	return h + m + s
+}
+
+// validateLocation takes a Location as input and returns (bool) if the Location is a valid one or not
+func validateLocation(l Location) bool {
+	if l.Latitude == "" || l.Longitude == "" {
+		return false
+	}
+	return true
+}
+
+// validateReachingTime takes a time.Time (reachingTime) as input and returns an error
+// if its a not valid Reaching time based on current time and some threshold reachin time
+func validateReachingTime(rt time.Time) error {
+	if rt.Sub(time.Now()) < time.Duration(time.Duration(reaching_time_threshold_in_minute)*time.Minute) {
+		return errors.New(fmt.Sprintf("reaching time: %s has past or is less than threshold interval: %d minutes from current time", rt, reaching_time_threshold_in_minute))
+	}
+	return nil
 }
